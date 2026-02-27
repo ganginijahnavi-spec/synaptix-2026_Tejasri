@@ -1,21 +1,238 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Explainable Skill-Based Internship Matching</title>
-
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fair Internship/Project Matcher</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            background: linear-gradient(to right, #667eea, #764ba2);
-            margin: 0;
-            padding: 30px;
+        
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            margin: 0; 
+            padding: 20px;
+            background:linear-gradient(135deg, #ff512f, #dd2476);
+            background-attachment: fixed;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
         }
 
-        .container {
-            background: white;
-            padding: 30px;
-            border-radius: 10px;
-            max-width: 900px;
-            margin: auto;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+           .container { 
+            max-width: 900px; 
+            width: 100%;
+            background: rgba(255, 255, 255, 0.95); 
+            padding: 30px; 
+            border-radius: 15px; 
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
         }
+
+        h1 { 
+            text-align: center; 
+            color: #333;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #764ba2;
+            padding-bottom: 10px;
+        }
+
+        h3 { color: #444; margin-top: 25px; }
+
+        
+        .input-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        label { 
+            font-weight: bold; 
+            margin-bottom: 5px; 
+            font-size: 0.9rem;
+            color: #555;
+        }
+
+        input { 
+            padding: 10px; 
+            border: 1px solid #ddd; 
+            border-radius: 5px; 
+            transition: border 0.3s;
+        }
+
+        input:focus {
+            border-color: #764ba2;
+            outline: none;
+        }
+
+        button { 
+            padding: 12px; 
+            margin-top: 20px; 
+            width: 100%; 
+            background-color: #007BFF; 
+            color: white; 
+            border: none; 
+            border-radius: 5px; 
+            cursor: pointer; 
+            font-size: 1rem;
+            font-weight: bold;
+            transition: background 0.3s;
+        }
+
+        button:hover { background-color: #0056b3; }
+
+        /* Table Styling */
+        table { 
+            width: 100%; 
+            border-collapse: collapse; 
+            margin-top: 20px; 
+            background: white;
+        }
+
+        th, td { 
+            border: 1px solid #eee; 
+            padding: 12px; 
+            text-align: left; 
+        }
+
+        th { 
+            background-color: #764ba2; 
+            color: white; 
+            font-weight: 600;
+        }
+
+        tr:nth-child(even) { background-color: #f9f9f9; }
+        
+        .reasoning-text {
+            font-size: 0.8rem;
+            color: #666;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Fair Internship/Project Matcher</h1>
+
+    <h3>Candidate Details</h3>
+    <div class="input-grid">
+        <div class="input-group" style="grid-column: span 2;">
+            <label>Candidate Name:</label>
+            <input type="text" id="candName" placeholder="Enter candidate name">
+        </div>
+
+        <div class="input-group">
+            <label>Python Skill (0-10):</label>
+            <input type="number" id="pythonSkill" min="0" max="10" value="5">
+        </div>
+
+        <div class="input-group">
+            <label>ML Skill (0-10):</label>
+            <input type="number" id="mlSkill" min="0" max="10" value="5">
+        </div>
+
+        <div class="input-group">
+            <label>Communication Skill (0-10):</label>
+            <input type="number" id="commSkill" min="0" max="10" value="5">
+        </div>
+
+        <div class="input-group">
+            <label>JavaScript Skill (0-10):</label>
+            <input type="number" id="jsSkill" min="0" max="10" value="5">
+        </div>
+
+        <div class="input-group">
+            <label>HTML/CSS Skill (0-10):</label>
+            <input type="number" id="htmlSkill" min="0" max="10" value="5">
+        </div>
+
+        <div class="input-group">
+            <label>Data Analysis Skill (0-10):</label>
+            <input type="number" id="dataSkill" min="0" max="10" value="5">
+        </div>
+    </div>
+
+    <button onclick="calculateMatch()">Add Candidate & Calculate Match</button>
+
+    <h3>Matching Results</h3>
+    <table id="resultTable">
+        <thead>
+        <tr>
+            <th>Candidate Name</th>
+            <th>Project Name</th>
+            <th>Match Score</th>
+            <th>Reasoning</th>
+        </tr>
+        </thead>
+        <tbody>
+        </tbody>
+    </table>
+</div>
+
+<script>
+    
+    const projects = [
+        {
+            name: "AI Internship",
+            weights: { python: 0.4, ml: 0.4, communication: 0.2 }
+        },
+        {
+            name: "Web Development Internship",
+            weights: { javascript: 0.5, html_css: 0.3, communication: 0.2 }
+        },
+        {
+            name: "Data Analysis Internship",
+            weights: { python: 0.3, data_analysis: 0.5, communication: 0.2 }
+        }
+    ];
+
+    function calculateMatch() {
+        const name = document.getElementById("candName").value || "Unknown";
+
+        const skills = {
+            python: parseFloat(document.getElementById("pythonSkill").value),
+            ml: parseFloat(document.getElementById("mlSkill").value),
+            communication: parseFloat(document.getElementById("commSkill").value),
+            javascript: parseFloat(document.getElementById("jsSkill").value),
+            html_css: parseFloat(document.getElementById("htmlSkill").value),
+            data_analysis: parseFloat(document.getElementById("dataSkill").value)
+        };
+
+        const tbody = document.getElementById("resultTable").getElementsByTagName("tbody")[0];
+
+        projects.forEach(proj => {
+            let score = 0;
+            let reasoningParts = [];
+
+            for (let skill in proj.weights) {
+                const skillScore = skills[skill] || 0;
+                const weight = proj.weights[skill];
+                score += skillScore * weight;
+                reasoningParts.push(`${skill.charAt(0).toUpperCase() + skill.slice(1)}: ${skillScore} * weight ${weight}`);
+            }
+
+            const skillContributions = Object.keys(proj.weights).map(skill => (skills[skill] || 0) * proj.weights[skill]);
+            const maxContribution = Math.max(...skillContributions);
+            if(maxContribution / score > 0.5) {
+                score = score * 0.95 + 0.05 * skillContributions.reduce((a,b)=>a+b,0)/skillContributions.length;
+                reasoningParts.push("Fairness adjustment applied");
+            }
+
+            score = score / 10;
+            
+            const reasoning = reasoningParts.join(", ");
+
+            const row = tbody.insertRow();
+            row.insertCell(0).innerText = name;
+            row.insertCell(1).innerText = proj.name;
+            row.insertCell(2).innerHTML = `<strong>${score.toFixed(2)}</strong>`;
+            row.insertCell(3).innerHTML = `<span class="reasoning-text">${reasoning}</span>`;
+        });
+    }
+</script>
+</body>
+</html>
